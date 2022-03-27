@@ -13,7 +13,7 @@ class MiTestModel(MiModel):
     nombre = models.CharField(max_length=50, unique=True)
     numero = models.FloatField()
     fecha = models.DateField(default=date.today)
-    related = models.ForeignKey(MiTestRelatedModel, on_delete=models.CASCADE)
+    related = models.ForeignKey(MiTestRelatedModel, on_delete=models.CASCADE, null=True)
 
 
 class MiTestPolymorphModel(PolymorphModel):

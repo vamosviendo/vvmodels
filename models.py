@@ -133,6 +133,18 @@ class MiModel(models.Model):
         except AttributeError:
             return False
 
+    def mantiene_foreignfield(self, campo, otro):
+        valor = getattr(self, campo)
+        if valor and not isinstance(valor, models.Model):
+            raise AttributeError(
+                f'El campo {campo} debe ser de tipo ForeignField'
+            )
+
+        try:
+            return valor.es_le_misme_que(getattr(otro, campo))
+        except AttributeError:
+            return False
+
 
 class PolymorphModel(MiModel):
     """ Agrega polimorfismo a MiModel."""

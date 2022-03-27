@@ -325,3 +325,48 @@ class TestPrimerAncestre(TestCase):
     def test_primer_ancestre_devuelve_el_propio_modelo_si_no_tiene_ancestros(self):
         obj = MiTestPolymorphModel(nombre='test', numero=3)
         self.assertEqual(obj.primer_ancestre(), MiTestPolymorphModel)
+
+
+@patch('vvmodel.models.MiModel.es_le_misme_que', autospec=True)
+class TestMantieneForeignField(TestCase):
+
+    def setUp(self):
+        self.relatedobject = MiTestRelatedModel.crear(nombre='objeto rel')
+        self.object = MiTestModel.crear(
+            nombre='objeto',
+            numero=1,
+            related=self.relatedobject
+        )
+
+    def test_llama_a_es_le_misme_que_con_campo_y_otro_objeto(self, mock_es_le_misme_que):
+        obj_guardado = self.object
+        self.object.mantiene_foreignfield('related', obj_guardado)
+        mock_es_le_misme_que.assert_called_once_with(
+            self.object.related,
+            obj_guardado.related
+        )
+
+    def test_devuelve_true_si_campo_es_igual_al_de_otro(self, mock_es_le_misme_que):
+        mock_otro = MagicMock()
+        mock_es_le_misme_que.return_value = True
+        self.assertTrue(
+            self.object.mantiene_foreignfield('related', mock_otro)
+        )
+
+    def test_devuelve_false_si_campo_es_distinto_al_de_otro(self, mock_es_le_misme_que):
+        mock_otro = MagicMock()
+        mock_es_le_misme_que.return_value = False
+        self.assertFalse(self.object.mantiene_foreignfield('related', mock_otro))
+
+    def test_devuelve_false_si_campo_es_none(self, mock_es_le_misme_que):
+        mock_otro = MagicMock()
+        self.object.related = None
+        self.assertFalse(self.object.mantiene_foreignfield('related', mock_otro))
+
+    def test_tira_error_si_campo_no_es_foreignfield(self, mock_es_le_misme_que):
+        mock_mov = MagicMock()
+        with self.assertRaisesMessage(
+                AttributeError,
+                'El campo nombre debe ser de tipo ForeignField'
+        ):
+            self.object.mantiene_foreignfield('nombre', mock_mov)
