@@ -113,6 +113,26 @@ class MiModel(models.Model):
 
         return False
 
+    def primer_ancestre(self):
+        """ Devuelve el primer modelo del que es subclase.
+            Si no es subclase, devuelve la clase propia.
+        """
+        try:
+            return self._meta.get_parent_list()[-1]
+        except IndexError:
+            return self.get_class()
+
+    def es_le_misme_que(self, otro):
+        """ Devuelve True si self y otro apuntan al mismo registro más allá
+            de la clase con la que se presenten.
+        """
+
+        try:
+            return (self.primer_ancestre() == otro.primer_ancestre() and
+                    self.pk == otro.pk)
+        except AttributeError:
+            return False
+
 
 class PolymorphModel(MiModel):
     """ Agrega polimorfismo a MiModel."""
@@ -146,26 +166,6 @@ class PolymorphModel(MiModel):
         content_type = self.content_type
         model = content_type.model_class()
         return model.tomar(pk=self.pk, polymorphic=False, using=db)
-
-    def es_le_misme_que(self, otro):
-        """ Devuelve True si self y otro apuntan al mismo registro más allá
-            de la clase con la que se presenten.
-        """
-
-        try:
-            return (self.primer_ancestre() == otro.primer_ancestre() and
-                    self.pk == otro.pk)
-        except AttributeError:
-            return False
-
-    def primer_ancestre(self):
-        """ Devuelve el primer modelo del que es subclase.
-            Si no es subclase, devuelve la clase propia.
-        """
-        try:
-            return self._meta.get_parent_list()[-1]
-        except IndexError:
-            return self.get_class()
 
     def actualizar_subclase(self):
         """ Devuelve instancia con info de clase actualizada"""
