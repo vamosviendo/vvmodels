@@ -157,7 +157,9 @@ class MiModel(models.Model):
             campo_en_memoria = getattr(self, campo)
             campo_en_bd = getattr(self.tomar_de_bd(), campo)
             if campo_en_memoria != campo_en_bd:
-                raise errors.ErrorCambioEnCampoFijo
+                raise errors.ErrorCambioEnCampoFijo(
+                    message=f"No se puede cambiar valor del campo '{campo}'"
+                )
         except (AttributeError, self.DoesNotExist):
             pass
 

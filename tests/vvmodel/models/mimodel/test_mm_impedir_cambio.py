@@ -5,7 +5,10 @@ from vvmodel import errors
 
 def test_tira_error_si_detecta_un_cambio_en_el_campo_dado(miobjetocomplejo):
     miobjetocomplejo.nombre = 'otro nombre'
-    with pytest.raises(errors.ErrorCambioEnCampoFijo):
+    with pytest.raises(
+            errors.ErrorCambioEnCampoFijo,
+            match="No se puede cambiar valor del campo 'nombre'"
+    ):
         miobjetocomplejo.impedir_cambio('nombre')
 
 
