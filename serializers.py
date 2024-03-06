@@ -1,5 +1,7 @@
 from collections import UserDict
 
+from django.apps import apps
+
 
 class SerializedObject(UserDict):
 
@@ -10,7 +12,11 @@ class SerializedObject(UserDict):
     @staticmethod
     def _validate(key, value):
         if key == "model":
-            return key, value
+            if type(value) is str:
+                app, model = value.split('.')
+                if app in apps.all_models.keys() and model in apps.all_models[app].keys():
+                    return key, value
+            raise ValueError(value)
         if key == "pk":
             if type(value) is int:
                 return key, value
