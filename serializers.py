@@ -42,9 +42,7 @@ class SerializedDb(UserList):
         super().__init__(initlist)
 
     def __setitem__(self, index, item):
-        item = self._validate(item)
-
-        super().__setitem__(index, item)
+        self.data[index] = self._validate(item)
 
     @staticmethod
     def _validate(item):
