@@ -1,4 +1,4 @@
-from collections import UserDict
+from collections import UserDict, UserList
 
 from django.apps import apps
 
@@ -33,3 +33,21 @@ class SerializedObject(UserDict):
 
         raise KeyError(
             f'Clave "{key}" no se encuentra entre las claves admitidas para SerializedObject')
+
+
+class SerializedDb(UserList):
+
+    def __init__(self, initlist=None):
+        initlist = map(self._validate, initlist) if initlist else None
+        super().__init__(initlist)
+
+    def __setitem__(self, index, item):
+        item = self._validate(item)
+
+        super().__setitem__(index, item)
+
+    @staticmethod
+    def _validate(item):
+        if isinstance(item, SerializedObject):
+            return item
+        raise TypeError
