@@ -13,17 +13,23 @@ class SerializedObject(UserDict):
     def _validate(key, value):
         if key == "model":
             if type(value) is str:
-                app, model = value.split('.')
+                try:
+                    app, model = value.split('.')
+                except ValueError:
+                    app, model = value, ""
                 if app in apps.all_models.keys() and model in apps.all_models[app].keys():
                     return key, value
-            raise ValueError(value)
+                raise ValueError(f'Valor "{value}" no responde a estructura correcta "<app>.<model>"')
+            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser str')
         if key == "pk":
-            if type(value) is int:
+            tipo = type(value)
+            if tipo is int:
                 return key, value
-            raise ValueError(value)
+            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser int')
         if key == "fields":
             if isinstance(value, dict):
                 return key, value
-            raise ValueError(value)
+            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser dict')
 
-        raise KeyError(key)
+        raise KeyError(
+            f'Clave "{key}" no se encuentra entre las claves admitidas para SerializedObject')
