@@ -44,6 +44,19 @@ class SerializedDb(UserList):
     def __setitem__(self, index, item):
         self.data[index] = self._validate(item)
 
+    def append(self, item):
+        self.data.append(self._validate(item))
+
+    def insert(self, index, item):
+        self.data.insert(index, self._validate(item))
+
+    def extend(self, other):
+        if isinstance(other, type(self)):
+            self.data.extend(other)
+        else:
+            self.data.extend(self._validate(item) for item in other)
+
+
     @staticmethod
     def _validate(item):
         if isinstance(item, SerializedObject):
