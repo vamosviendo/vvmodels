@@ -1,16 +1,22 @@
+from __future__ import annotations
+
 from collections import UserDict, UserList
+from typing import Any
 
 from django.apps import apps
 
 
+serializedobjectvalue = str | int | dict[str: Any]
+
+
 class SerializedObject(UserDict):
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
 
     @staticmethod
-    def _validate(key, value):
+    def _validate(key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
         if key == "model":
             if type(value) is str:
                 try:
@@ -37,28 +43,27 @@ class SerializedObject(UserDict):
 
 class SerializedDb(UserList):
 
-    def __init__(self, initlist=None):
+    def __init__(self, initlist: list[SerializedObject] = None):
         initlist = map(self._validate, initlist) if initlist else None
         super().__init__(initlist)
 
-    def __setitem__(self, index, item):
+    def __setitem__(self, index: int, item: SerializedObject):
         self.data[index] = self._validate(item)
 
-    def append(self, item):
+    def append(self, item: SerializedObject):
         self.data.append(self._validate(item))
 
-    def insert(self, index, item):
+    def insert(self, index: int, item: SerializedObject):
         self.data.insert(index, self._validate(item))
 
-    def extend(self, other):
+    def extend(self, other: list[SerializedObject]):
         if isinstance(other, type(self)):
             self.data.extend(other)
         else:
             self.data.extend(self._validate(item) for item in other)
 
-
     @staticmethod
-    def _validate(item):
+    def _validate(item: SerializedObject) -> SerializedObject:
         if isinstance(item, SerializedObject):
             return item
         raise TypeError
