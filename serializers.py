@@ -67,3 +67,6 @@ class SerializedDb(UserList):
         if isinstance(item, SerializedObject):
             return item
         raise TypeError
+
+    def filter_by_model(self, app: str, model: str) -> SerializedDb:
+        return SerializedDb([x for x in self if x["model"] == f"{app}.{model}"])
