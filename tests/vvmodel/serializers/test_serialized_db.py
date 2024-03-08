@@ -64,3 +64,17 @@ class TestModel:
         assert len(serialized_model) > 0
         for obj in serialized_model:
             assert obj["model"] == "tests.mitestrelatedmodel"
+
+    def test_da_valueerror_si_recibe_app_no_registrada(self, serialized_db):
+        with pytest.raises(
+                ValueError,
+                match='App "appinexistente" inexistente'
+        ):
+            serialized_db.filter_by_model("appinexistente", "mitestrelatedmodel")
+
+    def test_da_valueerror_si_recibe_modelo_inexistente_en_app(self, serialized_db):
+        with pytest.raises(
+                ValueError,
+                match='Modelo "modeloinexistente" inexistente en app "tests"'
+        ):
+            serialized_db.filter_by_model("tests", "modeloinexistente")

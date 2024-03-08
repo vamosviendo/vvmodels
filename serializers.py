@@ -69,4 +69,8 @@ class SerializedDb(UserList):
         raise TypeError
 
     def filter_by_model(self, app: str, model: str) -> SerializedDb:
-        return SerializedDb([x for x in self if x["model"] == f"{app}.{model}"])
+        if app in apps.all_models.keys():
+            if model in apps.all_models[app].keys():
+                return SerializedDb([x for x in self if x["model"] == f"{app}.{model}"])
+            raise ValueError(f'Modelo "{model}" inexistente en app "{app}"')
+        raise ValueError(f'App "{app}" inexistente')
