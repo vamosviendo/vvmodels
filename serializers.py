@@ -9,36 +9,56 @@ from django.apps import apps
 serializedobjectvalue = str | int | dict[str: Any]
 
 
+def validate_app(app: str) -> str:
+    if app in apps.all_models.keys():
+        return app
+    raise ValueError(f'App "{app}" inexistente')
+
+
+def validate_app_model(app: str, model: str):
+    if model in apps.all_models[app].keys():
+        return model
+    raise ValueError(f'Modelo "{model}" inexistente en app "{app}"')
+
+
 class SerializedObject(UserDict):
 
     def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
 
-    @staticmethod
-    def _validate(key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
+    def _validate(self, key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
         if key == "model":
-            if type(value) is str:
-                try:
-                    app, model = value.split('.')
-                except ValueError:
-                    app, model = value, ""
-                if app in apps.all_models.keys() and model in apps.all_models[app].keys():
-                    return key, value
-                raise ValueError(f'Valor "{value}" no responde a estructura correcta "<app>.<model>"')
-            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser str')
+            return key, self._validate_model(value)
         if key == "pk":
-            tipo = type(value)
-            if tipo is int:
-                return key, value
-            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser int')
+            return key, self._validate_pk(value)
         if key == "fields":
-            if isinstance(value, dict):
-                return key, value
-            raise TypeError(f'Tipo de valor "{value}" de clave "{key}" erróneo. Debe ser dict')
-
+            return key, self._validate_fields(value)
         raise KeyError(
             f'Clave "{key}" no se encuentra entre las claves admitidas para SerializedObject')
+
+    @staticmethod
+    def _validate_model(model: str) -> str:
+        if type(model) is str:
+            try:
+                app, model = model.split('.')
+            except ValueError:
+                raise ValueError(f'Valor "{model}" no responde a estructura correcta "<app>.<model>"')
+            return f"{validate_app(app)}.{validate_app_model(app, model)}"
+
+        raise TypeError(f'Tipo de valor "{model}" de clave "model" erróneo. Debe ser str')
+
+    @staticmethod
+    def _validate_pk(pk: int) -> int:
+        if type(pk) is int:
+            return pk
+        raise TypeError(f'Tipo de valor "{pk}" de clave "pk" erróneo. Debe ser int')
+
+    @staticmethod
+    def _validate_fields(fields: dict[str, Any]):
+        if isinstance(fields, dict):
+            return fields
+        raise TypeError(f'Tipo de valor "{fields}" de clave "fields" erróneo. Debe ser dict')
 
 
 class SerializedDb(UserList):
@@ -69,8 +89,8 @@ class SerializedDb(UserList):
         raise TypeError
 
     def filter_by_model(self, app: str, model: str) -> SerializedDb:
-        if app in apps.all_models.keys():
-            if model in apps.all_models[app].keys():
-                return SerializedDb([x for x in self if x["model"] == f"{app}.{model}"])
-            raise ValueError(f'Modelo "{model}" inexistente en app "{app}"')
-        raise ValueError(f'App "{app}" inexistente')
+        return SerializedDb([
+            x for x in self
+            if x["model"] == f"{validate_app(app)}."
+                             f"{validate_app_model(app, model)}"
+        ])
