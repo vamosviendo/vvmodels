@@ -1,25 +1,6 @@
-import json
-from io import StringIO
-
 import pytest
 
-from django.core.management import call_command
-
 from vvmodel.serializers import SerializedDb, SerializedObject
-from vvmodel.tests.models import MiTestRelatedModel, MiTestModel, MiTestPolymorphModel
-
-
-@pytest.fixture
-def serialized_db(
-        miobjeto: MiTestRelatedModel,
-        miotroobjeto: MiTestRelatedModel,
-        miobjetocomplejo: MiTestModel,
-        miobjetopolimorfico: MiTestPolymorphModel) -> SerializedDb:
-    serialization = StringIO()
-    call_command('dumpdata', indent=2, stdout=serialization)
-    return SerializedDb(
-        [SerializedObject(x) for x in json.loads(serialization.getvalue())]
-    )
 
 
 class TestUpdateOrAppendElements:

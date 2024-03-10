@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import json
 from collections import UserDict, UserList
-from typing import Any
+from typing import Any, TextIO
 
 from django.apps import apps
 
@@ -94,3 +95,12 @@ class SerializedDb(UserList):
             if x["model"] == f"{validate_app(app)}."
                              f"{validate_app_model(app, model)}"
         ])
+
+
+def load_serialized_filename(archivo: str) -> SerializedDb:
+    with open(archivo, 'r') as db:
+        return load_serialized_file(db)
+
+
+def load_serialized_file(archivo: TextIO) -> SerializedDb:
+    return SerializedDb([SerializedObject(x) for x in json.load(archivo)])
