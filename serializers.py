@@ -7,16 +7,16 @@ from typing import Any, TextIO
 from django.apps import apps
 
 
-serializedobjectvalue = str | int | dict[str: Any]
+serializedobjectvalue: type = str | int | dict[str: Any]
 
 
-def validate_app(app: str) -> str:
+def _validate_app(app: str) -> str:
     if app in apps.all_models.keys():
         return app
     raise ValueError(f'App "{app}" inexistente')
 
 
-def validate_app_model(app: str, model: str):
+def _validate_app_model(app: str, model: str):
     if model in apps.all_models[app].keys():
         return model
     raise ValueError(f'Modelo "{model}" inexistente en app "{app}"')
@@ -45,7 +45,7 @@ class SerializedObject(UserDict):
                 app, model = model.split('.')
             except ValueError:
                 raise ValueError(f'Valor "{model}" no responde a estructura correcta "<app>.<model>"')
-            return f"{validate_app(app)}.{validate_app_model(app, model)}"
+            return f"{_validate_app(app)}.{_validate_app_model(app, model)}"
 
         raise TypeError(f'Tipo de valor "{model}" de clave "model" erróneo. Debe ser str')
 
@@ -92,8 +92,8 @@ class SerializedDb(UserList):
     def filter_by_model(self, app: str, model: str) -> SerializedDb:
         return SerializedDb([
             x for x in self
-            if x["model"] == f"{validate_app(app)}."
-                             f"{validate_app_model(app, model)}"
+            if x["model"] == f"{_validate_app(app)}."
+                             f"{_validate_app_model(app, model)}"
         ])
 
 
