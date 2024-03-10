@@ -61,6 +61,30 @@ class SerializedObject(UserDict):
             return fields
         raise TypeError(f'Tipo de valor "{fields}" de clave "fields" erróneo. Debe ser dict')
 
+    @property
+    def model(self) -> str:
+        return self['model']
+
+    @model.setter
+    def model(self, value: str):
+        self['model'] = value
+
+    @property
+    def pk(self) -> int:
+        return self['pk']
+
+    @pk.setter
+    def pk(self, value: int):
+        self['pk'] = value
+
+    @property
+    def fields(self) -> dict[str, Any]:
+        return self['fields']
+
+    @fields.setter
+    def fields(self, value: dict[str, Any]):
+        self['fields'] = value
+
 
 class SerializedDb(UserList):
 
