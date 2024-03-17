@@ -24,9 +24,12 @@ def _validate_app_model(app: str, model: str):
 
 class SerializedObject(UserDict):
 
-    def __init__(self, dict: dict = None, /, container: SerializedDb = None, **kwargs):
+    def __init__(self, dict: dict | SerializedObject = None, /, container: SerializedDb = None, **kwargs):
         super().__init__(dict, **kwargs)
         self.container = container
+        if container is None:
+            if isinstance(dict, SerializedObject):
+                self.container = dict.container
 
     def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
