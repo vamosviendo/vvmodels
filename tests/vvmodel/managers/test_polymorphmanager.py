@@ -5,7 +5,7 @@ from vvmodel.tests.models import MiTestPolymorphModel
 
 
 @pytest.fixture
-def poly_manager():
+def poly_manager() -> PolymorphManager:
     pm = PolymorphManager()
     pm.model = MiTestPolymorphModel
     return pm

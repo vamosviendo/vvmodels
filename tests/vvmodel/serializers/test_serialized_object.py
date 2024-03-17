@@ -72,3 +72,13 @@ class TestProperties:
     def test_asigna_valor_a_clave_correspondiente(self, serialized_object, prop, value):
         setattr(serialized_object, prop, value)
         assert serialized_object[prop] == value
+
+
+class TestContainer:
+
+    def test_guarda_referencia_a_SerializedDb_de_la_que_forma_parte_el_objeto(self, serialized_db):
+        for object in serialized_db:
+            assert object.container == serialized_db
+
+    def test_si_el_objeto_no_forma_parte_de_una_SerializedDb_es_None(self, serialized_object):
+        assert serialized_object.container is None

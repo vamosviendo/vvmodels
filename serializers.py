@@ -24,6 +24,10 @@ def _validate_app_model(app: str, model: str):
 
 class SerializedObject(UserDict):
 
+    def __init__(self, dict: dict = None, /, container: SerializedDb = None, **kwargs):
+        super().__init__(dict, **kwargs)
+        self.container = container
+
     def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
@@ -127,4 +131,7 @@ def load_serialized_filename(archivo: str) -> SerializedDb:
 
 
 def load_serialized_file(archivo: TextIO) -> SerializedDb:
-    return SerializedDb([SerializedObject(x) for x in json.load(archivo)])
+    serialized_db = SerializedDb()
+    for obj in json.load(archivo):
+        serialized_db.append(SerializedObject(obj, container=serialized_db))
+    return serialized_db

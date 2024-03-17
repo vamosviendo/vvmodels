@@ -1,7 +1,7 @@
 import json
 from io import StringIO
 from pathlib import Path
-from typing import Union, TextIO
+from typing import Union, TextIO, Generator
 
 import pytest
 from django.core.management import call_command
@@ -23,7 +23,7 @@ def elementos(
 
 
 @pytest.fixture
-def serialized_file(elementos) -> TextIO:
+def serialized_file(elementos) -> Generator[TextIO, None, None]:
     serialized_db = StringIO()
     call_command("dumpdata", "tests", indent=2, stdout=serialized_db)
     with open('db.json', 'w') as sf:
@@ -37,6 +37,7 @@ def serialized_file(elementos) -> TextIO:
 def serialized_db(elementos: list[TestModel]) -> SerializedDb:
     serialization = StringIO()
     call_command('dumpdata', indent=2, stdout=serialization)
-    return SerializedDb(
-        [SerializedObject(x) for x in json.loads(serialization.getvalue())]
-    )
+    serialized_db = SerializedDb()
+    for obj in json.loads(serialization.getvalue()):
+        serialized_db.append(SerializedObject(obj, container=serialized_db))
+    return serialized_db
