@@ -114,18 +114,21 @@ class SerializedDb(UserList):
         else:
             self.data.extend(self._validate(item) for item in other)
 
-    @staticmethod
-    def _validate(item: SerializedObject) -> SerializedObject:
-        if isinstance(item, SerializedObject):
-            return item
-        raise TypeError
-
     def filter_by_model(self, app: str, model: str) -> SerializedDb:
         return SerializedDb([
             x for x in self
             if x["model"] == f"{_validate_app(app)}."
                              f"{_validate_app_model(app, model)}"
         ])
+
+    def primere(self, app: str, model: str) -> SerializedObject:
+        return next((x for x in self.filter_by_model(app, model)), None)
+
+    @staticmethod
+    def _validate(item: SerializedObject) -> SerializedObject:
+        if isinstance(item, SerializedObject):
+            return item
+        raise TypeError
 
 
 def load_serialized_filename(archivo: str) -> SerializedDb:

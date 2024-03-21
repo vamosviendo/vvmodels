@@ -36,7 +36,7 @@ class TestUpdateOrAppendElements:
         serialized_db.extend([x for x in lista if isinstance(x, SerializedObject)])     # No debe dar error
 
 
-class TestModel:
+class TestFilterByModel:
 
     def test_devuelve_serializeddb_con_todos_los_elementos_de_un_modelo_dado(
             self, serialized_db):
@@ -59,3 +59,18 @@ class TestModel:
                 match='Modelo "modeloinexistente" inexistente en app "tests"'
         ):
             serialized_db.filter_by_model("tests", "modeloinexistente")
+
+
+class TestPrimere:
+    def test_devuelve_el_primer_elemento_del_modelo_dado(self, serialized_db):
+        assert \
+            serialized_db.primere("tests", "mitestrelatedmodel") == \
+            next(
+                x for x in serialized_db.filter_by_model(
+                    "tests", "mitestrelatedmodel"
+                )
+            )
+
+    def test_devuelve_none_si_no_hay_elementos_del_modelo_dado(self, serialized_db):
+        db_sin_model = SerializedDb([x for x in serialized_db if x.model != "tests.mitestrelatedmodel"])
+        assert db_sin_model.primere("tests", "mitestrelatedmodel") is None
