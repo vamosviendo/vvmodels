@@ -17,9 +17,10 @@ def elementos(
         miobjeto: MiTestRelatedModel,
         miotroobjeto: MiTestRelatedModel,
         miobjetocomplejo: MiTestModel,
+        miotroobjetocomplejo: MiTestModel,
         miobjetopolimorfico: MiTestPolymorphModel
 ) -> list[TestModel]:
-    return [miobjeto, miotroobjeto, miobjetocomplejo, miobjetopolimorfico]
+    return [miobjeto, miotroobjeto, miobjetocomplejo, miotroobjetocomplejo, miobjetopolimorfico]
 
 
 @pytest.fixture

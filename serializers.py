@@ -6,7 +6,6 @@ from typing import Any, TextIO
 
 from django.apps import apps
 
-
 serializedobjectvalue: type = str | int | dict[str: Any]
 
 
@@ -121,8 +120,19 @@ class SerializedDb(UserList):
                              f"{_validate_app_model(app, model)}"
         ])
 
-    def primere(self, app: str, model: str) -> SerializedObject:
-        return next((x for x in self.filter_by_model(app, model)), None)
+    def primere(self, app: str, model: str, **kwargs) -> SerializedObject:
+        def all_kwargs_present(x: SerializedObject, **_kwargs) -> bool:
+            result = True
+            for key, value in _kwargs.items():
+                result = (x.pk == value) if key == "pk" else (x.fields[key] == value)
+                if result is False:
+                    break
+            return result
+
+        return next(
+            (x for x in self.filter_by_model(app, model) if all_kwargs_present(x, **kwargs)),
+            None
+        )
 
     @staticmethod
     def _validate(item: SerializedObject) -> SerializedObject:
