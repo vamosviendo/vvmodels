@@ -87,7 +87,7 @@ class TestContainer:
         assert SerializedObject(serialized_db[0]).container == serialized_db[0].container
 
     def test_toma_container_de_argumento_container_si_no_es_None_aunque_dict_sea_un_SerializedObject(self, serialized_db):
-        serialized_model = serialized_db.filter_by_model("tests", "mitestrelatedmodel")
+        serialized_model = serialized_db.filter_by_model("tests.mitestrelatedmodel")
         serialized_object = SerializedObject(serialized_db[0], container=serialized_model)
         assert serialized_object.container != serialized_db[0].container
         assert serialized_object.container == serialized_model

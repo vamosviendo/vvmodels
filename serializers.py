@@ -34,39 +34,6 @@ class SerializedObject(UserDict):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
 
-    def _validate(self, key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
-        if key == "model":
-            return key, self._validate_model(value)
-        if key == "pk":
-            return key, self._validate_pk(value)
-        if key == "fields":
-            return key, self._validate_fields(value)
-        raise KeyError(
-            f'Clave "{key}" no se encuentra entre las claves admitidas para SerializedObject')
-
-    @staticmethod
-    def _validate_model(model: str) -> str:
-        if type(model) is str:
-            try:
-                app, model = model.split('.')
-            except ValueError:
-                raise ValueError(f'Valor "{model}" no responde a estructura correcta "<app>.<model>"')
-            return f"{_validate_app(app)}.{_validate_app_model(app, model)}"
-
-        raise TypeError(f'Tipo de valor "{model}" de clave "model" erróneo. Debe ser str')
-
-    @staticmethod
-    def _validate_pk(pk: int) -> int:
-        if type(pk) is int:
-            return pk
-        raise TypeError(f'Tipo de valor "{pk}" de clave "pk" erróneo. Debe ser int')
-
-    @staticmethod
-    def _validate_fields(fields: dict[str, Any]):
-        if isinstance(fields, dict):
-            return fields
-        raise TypeError(f'Tipo de valor "{fields}" de clave "fields" erróneo. Debe ser dict')
-
     @property
     def model(self) -> str:
         return self['model']
@@ -91,6 +58,39 @@ class SerializedObject(UserDict):
     def fields(self, value: dict[str, Any]):
         self['fields'] = value
 
+    def _validate(self, key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
+        if key == "model":
+            return key, self._validate_model(value)
+        if key == "pk":
+            return key, self._validate_pk(value)
+        if key == "fields":
+            return key, self._validate_fields(value)
+        raise KeyError(
+            f'Clave "{key}" no se encuentra entre las claves admitidas para SerializedObject')
+
+    @staticmethod
+    def _validate_model(model: str) -> str:
+        if type(model) is str:
+            try:
+                app, app_model = model.split('.')
+            except ValueError:
+                raise ValueError(f'Valor "{model}" no responde a estructura correcta "<app>.<model>"')
+            return f"{_validate_app(app)}.{_validate_app_model(app, app_model)}"
+
+        raise TypeError(f'Tipo de valor "{model}" de clave "model" erróneo. Debe ser str')
+
+    @staticmethod
+    def _validate_pk(pk: int) -> int:
+        if type(pk) is int:
+            return pk
+        raise TypeError(f'Tipo de valor "{pk}" de clave "pk" erróneo. Debe ser int')
+
+    @staticmethod
+    def _validate_fields(fields: dict[str, Any]):
+        if isinstance(fields, dict):
+            return fields
+        raise TypeError(f'Tipo de valor "{fields}" de clave "fields" erróneo. Debe ser dict')
+
 
 class SerializedDb(UserList):
 
@@ -113,14 +113,15 @@ class SerializedDb(UserList):
         else:
             self.data.extend(self._validate(item) for item in other)
 
-    def filter_by_model(self, app: str, model: str) -> SerializedDb:
+    def filter_by_model(self, model: str) -> SerializedDb:
+        app, app_model = model.split(".")
         return SerializedDb([
             x for x in self
             if x["model"] == f"{_validate_app(app)}."
-                             f"{_validate_app_model(app, model)}"
+                             f"{_validate_app_model(app, app_model)}"
         ])
 
-    def primere(self, app: str, model: str, **kwargs) -> SerializedObject:
+    def primere(self, model: str, **kwargs) -> SerializedObject:
         def all_kwargs_present(x: SerializedObject, **_kwargs) -> bool:
             result = True
             for key, value in _kwargs.items():
@@ -130,7 +131,7 @@ class SerializedDb(UserList):
             return result
 
         return next(
-            (x for x in self.filter_by_model(app, model) if all_kwargs_present(x, **kwargs)),
+            (x for x in self.filter_by_model(model) if all_kwargs_present(x, **kwargs)),
             None
         )
 
