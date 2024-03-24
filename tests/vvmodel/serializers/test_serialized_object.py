@@ -120,3 +120,12 @@ class TestPrimere:
         class SerializedSubObject(SerializedObject): pass
         with pytest.raises(NotImplementedError):
             SerializedSubObject.primere(serialized_db)
+
+    def test_busca_campos_si_se_pasan_argumentos_con_clave(self, serialized_db):
+        assert \
+            SerializedMiTestModel.primere(serialized_db, nombre="miobjetocompleto") == \
+            serialized_db.primere(SerializedMiTestModel.model_string(), nombre="miobjetocompleto")
+
+    def test_devuelve_none_si_no_encuentra_argumento_con_clave(self, serialized_db):
+        assert \
+            SerializedMiTestModel.primere(serialized_db, nombre="nombreinexistente") is None

@@ -38,8 +38,9 @@ class SerializedObject(UserDict):
         raise NotImplementedError('Método "model_string" no implementado')
 
     @classmethod
-    def primere(cls, container: SerializedDb) -> Self:
-        return cls(container.primere(cls.model_string()))
+    def primere(cls, container: SerializedDb, **kwargs) -> Self | None:
+        result = container.primere(cls.model_string(), **kwargs)
+        return cls(result) or None
 
     def __init__(self, dict: dict | SerializedObject = None, /, container: SerializedDb = None, **kwargs):
         super().__init__(dict, **kwargs)
