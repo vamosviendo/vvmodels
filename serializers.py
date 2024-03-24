@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from collections import UserDict, UserList
-from typing import Any, TextIO
+from typing import Any, TextIO, Self
 
 from django.apps import apps
 
@@ -15,13 +15,31 @@ def _validate_app(app: str) -> str:
     raise ValueError(f'App "{app}" inexistente')
 
 
-def _validate_app_model(app: str, model: str):
+def _validate_app_model(app: str, model: str) -> str:
     if model in apps.all_models[app].keys():
         return model
     raise ValueError(f'Modelo "{model}" inexistente en app "{app}"')
 
+def _validate_app_and_model(model: str) -> str:
+    app, app_model = model.split(".")
+    _validate_app(app)
+    _validate_app_model(app, app_model)
+    return model
+
 
 class SerializedObject(UserDict):
+
+    @classmethod
+    def model_string(cls):
+        """ En subclases de SerializedObject, debe ser implementada para que
+            devuelva la cadena "app.model" correspondiente al modelo
+            representado
+        """
+        raise NotImplementedError('Método "model_string" no implementado')
+
+    @classmethod
+    def primere(cls, container: SerializedDb) -> Self:
+        return cls(container.primere(cls.model_string()))
 
     def __init__(self, dict: dict | SerializedObject = None, /, container: SerializedDb = None, **kwargs):
         super().__init__(dict, **kwargs)
@@ -114,11 +132,9 @@ class SerializedDb(UserList):
             self.data.extend(self._validate(item) for item in other)
 
     def filter_by_model(self, model: str) -> SerializedDb:
-        app, app_model = model.split(".")
         return SerializedDb([
             x for x in self
-            if x["model"] == f"{_validate_app(app)}."
-                             f"{_validate_app_model(app, app_model)}"
+            if x["model"] == _validate_app_and_model(model)
         ])
 
     def primere(self, model: str, **kwargs) -> SerializedObject:

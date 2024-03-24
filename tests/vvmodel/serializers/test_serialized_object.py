@@ -1,8 +1,7 @@
-from collections import UserDict
-
 import pytest
 
 from vvmodel.serializers import SerializedObject
+from vvmodel.tests.serializers import SerializedMiTestModel
 
 
 @pytest.fixture
@@ -91,3 +90,33 @@ class TestContainer:
         serialized_object = SerializedObject(serialized_db[0], container=serialized_model)
         assert serialized_object.container != serialized_db[0].container
         assert serialized_object.container == serialized_model
+
+
+class TestModelStr:
+    def test_da_error_de_no_implementacion_en_SerializedObject(self):
+        with pytest.raises(NotImplementedError, match='Método "model_string" no implementado'):
+            SerializedObject.model_string()
+
+    def test_da_error_de_no_implementacion_si_no_se_redefine_en_subclases_de_SerializedObject(self):
+        class SerializedSubObject(SerializedObject): pass
+        with pytest.raises(NotImplementedError, match='Método "model_string" no implementado'):
+            SerializedSubObject.model_string()
+
+    def test_no_da_error_si_se_la_redefine_en_la_subclase(self):
+        assert SerializedMiTestModel.model_string() == "tests.mitestmodel"
+
+class TestPrimere:
+    def test_devuelve_primer_objeto_del_modelo_de_la_clase_en_una_SerializedDb_dada(self, serialized_db):
+        assert SerializedMiTestModel.primere(serialized_db) == serialized_db.primere("tests.mitestmodel")
+
+    def test_en_clases_que_heredan_de_SerializedObject_objeto_devuelto_es_de_la_subclase_correcta(self, serialized_db):
+        assert type(SerializedMiTestModel.primere(serialized_db)) is SerializedMiTestModel
+
+    def test_da_error_de_no_implementacion_si_se_la_llama_en_SerializedObject(self, serialized_db):
+        with pytest.raises(NotImplementedError):
+            SerializedObject.primere(serialized_db)
+
+    def test_da_error_de_no_implementacion_si_no_esta_implementado_el_metodo_model_str_en_la_subclase_de_SerializedObject(self, serialized_db):
+        class SerializedSubObject(SerializedObject): pass
+        with pytest.raises(NotImplementedError):
+            SerializedSubObject.primere(serialized_db)
