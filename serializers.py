@@ -146,11 +146,16 @@ class SerializedDb(UserList):
             return None
 
     def tomar(self, **kwargs) -> SerializedObject:
-        # Validar argumentos: Si se pasa "pk", debe pasarse "model".
+        # Validar argumentos: Si se pasa "pk", debe pasarse "model"
+        # a menos que todos los elementos de la serie compartan el mismo
+        # modelo.
         if "pk" in kwargs.keys() and "model" not in kwargs.keys():
-            raise ValidationError(
-                'Si se pasa argumento "pk", debe estar presente el argumento "model"'
-            )
+            models = [x.model for x in self]
+            if not all(model == models[0] for model in models):
+                raise ValidationError(
+                    'Si se pasa argumento "pk", debe estar presente el argumento "model" '
+                    'o bien todos los valores de "model" en la serie deben ser iguales'
+                )
 
         def all_kwargs_present(x: SerializedObject, **_kwargs) -> bool:
             result = True

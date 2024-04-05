@@ -81,9 +81,17 @@ class TestTomar:
     def test_si_hay_argumento_pk_debe_haber_argumento_model(self, serialized_db):
         with pytest.raises(
                 ValidationError,
-                match='Si se pasa argumento "pk", debe estar presente el argumento "model"'
+                match='Si se pasa argumento "pk", debe estar presente el argumento "model" '
+                    'o bien todos los valores de "model" en la serie deben ser iguales'
         ):
             serialized_db.tomar(pk=2)
+
+    def test_si_hay_argumento_pk_puede_no_haber_argumento_model_si_todos_los_elementos_de_la_serie_tienen_el_mismo_valor_model(
+            self, serialized_db):
+        serialized_mitestmodel = serialized_db.filter_by_model("tests.mitestmodel")
+        assert serialized_mitestmodel.tomar(pk=1) == next(
+            x for x in serialized_db if x.model == "tests.mitestmodel" and x.pk == 1
+        )
 
     def test_si_el_argumento_es_pk_busca_la_clave_primaria_y_no_un_campo(self, serialized_db):
         assert \
