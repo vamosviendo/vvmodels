@@ -5,6 +5,7 @@ from collections import UserDict, UserList
 from typing import Any, TextIO, Self
 
 from django.apps import apps
+from django.core.exceptions import ValidationError
 
 serializedobjectvalue: type = str | int | dict[str: Any]
 
@@ -37,17 +38,17 @@ class SerializedObject(UserDict):
         """
         raise NotImplementedError('Método "model_string" no implementado')
 
-    @classmethod
-    def primere(cls, container: SerializedDb, **kwargs) -> Self | None:
-        result = container.primere(cls.model_string(), **kwargs)
-        return cls(result) or None
-
     def __init__(self, dict: dict | SerializedObject = None, /, container: SerializedDb = None, **kwargs):
         super().__init__(dict, **kwargs)
         self.container = container
         if container is None:
             if isinstance(dict, SerializedObject):
                 self.container = dict.container
+
+    @classmethod
+    def primere(cls, container: SerializedDb, **kwargs) -> Self | None:
+        result = container.primere(cls.model_string(), **kwargs)
+        return cls(result) or None
 
     def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
@@ -138,19 +139,30 @@ class SerializedDb(UserList):
             if x["model"] == _validate_app_and_model(model)
         ])
 
-    def primere(self, model: str, **kwargs) -> SerializedObject:
+    def primere(self, model: str, **kwargs) -> SerializedObject | None:
+        try:
+            return self.tomar(model=model, **kwargs)
+        except StopIteration:
+            return None
+
+    def tomar(self, **kwargs) -> SerializedObject:
+        # Validar argumentos: Si se pasa "pk", debe pasarse "model".
+        if "pk" in kwargs.keys() and "model" not in kwargs.keys():
+            raise ValidationError(
+                'Si se pasa argumento "pk", debe estar presente el argumento "model"'
+            )
+
         def all_kwargs_present(x: SerializedObject, **_kwargs) -> bool:
             result = True
             for key, value in _kwargs.items():
-                result = (x.pk == value) if key == "pk" else (x.fields[key] == value)
+                result = (x.pk == value) if key == "pk" \
+                    else (x.model == value) if key == "model" \
+                    else (x.fields[key] == value)
                 if result is False:
                     break
             return result
 
-        return next(
-            (x for x in self.filter_by_model(model) if all_kwargs_present(x, **kwargs)),
-            None
-        )
+        return next(x for x in self if all_kwargs_present(x, **kwargs))
 
     @staticmethod
     def _validate(item: SerializedObject) -> SerializedObject:

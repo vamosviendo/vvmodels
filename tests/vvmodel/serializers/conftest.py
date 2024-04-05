@@ -37,7 +37,7 @@ def serialized_file(elementos) -> Generator[TextIO, None, None]:
 @pytest.fixture
 def serialized_db(elementos: list[TestModel]) -> SerializedDb:
     serialization = StringIO()
-    call_command('dumpdata', indent=2, stdout=serialization)
+    call_command('dumpdata', "tests", indent=2, stdout=serialization)
     serialized_db = SerializedDb()
     for obj in json.loads(serialization.getvalue()):
         serialized_db.append(SerializedObject(obj, container=serialized_db))

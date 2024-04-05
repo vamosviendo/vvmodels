@@ -1,4 +1,5 @@
 import pytest
+from django.core.exceptions import ValidationError
 
 from vvmodel.serializers import SerializedDb, SerializedObject
 
@@ -61,7 +62,49 @@ class TestFilterByModel:
             serialized_db.filter_by_model("tests.modeloinexistente")
 
 
+class TestTomar:
+    def test_devuelve_el_primer_elemento_en_el_que_el_valor_del_campo_coincide_con_el_argumento(
+            self, serialized_db):
+        assert \
+            serialized_db.tomar(nombre="miotroobjeto") == \
+            next(x for x in serialized_db if x.fields["nombre"] == "miotroobjeto")
+
+    def test_da_error_si_no_encuentra_el_elemento_solicitado(self, serialized_db):
+        with pytest.raises(StopIteration):
+            serialized_db.tomar(nombre="objetoinexistente")
+
+    def test_si_el_argumento_es_model_busca_el_modelo_y_no_un_campo(self, serialized_db):
+        assert \
+            serialized_db.tomar(model="tests.mitestmodel") == \
+            next(x for x in serialized_db if x.model == "tests.mitestmodel")
+
+    def test_si_hay_argumento_pk_debe_haber_argumento_model(self, serialized_db):
+        with pytest.raises(
+                ValidationError,
+                match='Si se pasa argumento "pk", debe estar presente el argumento "model"'
+        ):
+            serialized_db.tomar(pk=2)
+
+    def test_si_el_argumento_es_pk_busca_la_clave_primaria_y_no_un_campo(self, serialized_db):
+        assert \
+            serialized_db.tomar(model="tests.mitestmodel", pk=2) == \
+            next(x for x in serialized_db if x.model == "tests.mitestmodel" and x.pk == 2)
+
+    def test_si_recibe_pk_que_coincide_junto_con_campo_que_no_coincide_da_error(self, serialized_db):
+        with pytest.raises(StopIteration):
+            serialized_db.tomar(model="tests.mitestmodel", pk=2, nombre="objeto inexistente")
+
+    def test_si_recibe_campo_que_coincide_junto_con_pk_que_no_coincide_devuelve_None(self, serialized_db):
+        with pytest.raises(StopIteration):
+            serialized_db.tomar(model="tests.mitestmodel", pk=5, nombre="mitestmodel")
+
+
 class TestPrimere:
+
+    @pytest.fixture
+    def mock_tomar(self, mocker):
+        return mocker.patch("vvmodel.serializers.SerializedDb.tomar", autospec=True)
+
     def test_devuelve_el_primer_elemento_del_modelo_dado_en_el_que_el_valor_del_campo_coincide_con_el_argumento(
             self, serialized_db):
         assert \
@@ -72,44 +115,15 @@ class TestPrimere:
                 ) if x.fields["nombre"] == "miotroobjeto"
             )
 
-    def test_puede_manejar_mas_de_un_argumento(self, serialized_db):
-        assert serialized_db.primere(
-            "tests.mitestmodel", numero=5.0, nombre="miotroobjetocompleto"
-        ) == next(
-            x for x in serialized_db.filter_by_model(
-                "tests.mitestmodel"
-            ) if x.fields["nombre"] == "miotroobjetocompleto" and x.fields["numero"] == 5.0
-        )
+    def test_toma_objeto_con_los_valores_dados_de_la_base_de_datos_serializada(self, serialized_db, mock_tomar):
+        serialized_db.primere("tests.mitestrelatedmodel", nombre="miotroobjeto")
+        mock_tomar.assert_called_once_with(serialized_db, model="tests.mitestrelatedmodel", nombre="miotroobjeto")
 
-    def test_si_no_encuentra_elemento_con_todos_los_argumentos_devuelve_None(self, serialized_db):
-        assert serialized_db.primere(
-                "tests.mitestmodel", nombre="miotroobjetocompleto", numero=6.0
-        ) is None
-
-    def test_si_el_argumento_es_pk_busca_la_clave_primaria_y_no_un_campo(self, serialized_db):
-        for obj in serialized_db.filter_by_model("tests.mitestmodel"):
-            obj.fields.update({'pk': 5 if obj.pk == 1 else 1})
-        assert serialized_db.primere(
-            "tests.mitestmodel", pk=1
-        ) == next(
-            x for x in serialized_db.filter_by_model("tests.mitestmodel")
-            if x.pk == 1
-        )
-
-    def test_si_recibe_pk_que_coincide_junto_con_campo_que_no_coincide_devuelve_None(self, serialized_db):
-        assert serialized_db.primere("tests.mitestmodel", pk=2, nombre="objeto inexistente") is None
-
-    def test_si_recibe_campo_que_coincide_junto_con_pk_que_no_coincide_devuelve_None(self, serialized_db):
-        assert serialized_db.primere("tests.mitestmodel", pk=5, nombre="mitestmodel") is None
-
-    def test_si_no_se_pasan_otros_argumentos_devuelve_el_primer_elemento_del_modelo_dado(self, serialized_db):
-        assert \
-            serialized_db.primere("tests.mitestrelatedmodel") == \
-            next(
-                x for x in serialized_db.filter_by_model(
-                    "tests.mitestrelatedmodel"
-                )
-            )
+    def test_puede_manejar_mas_de_un_argumento(self, serialized_db, mock_tomar):
+        serialized_db.primere(
+            "tests.mitestmodel", numero=5.0, nombre="miotroobjetocompleto")
+        mock_tomar.assert_called_once_with(
+            serialized_db, model="tests.mitestmodel", numero=5.0, nombre="miotroobjetocompleto")
 
     def test_devuelve_none_si_no_se_encuentra_el_elemento_solicitado(self, serialized_db):
         db_sin_model = SerializedDb([x for x in serialized_db if x.model != "tests.mitestrelatedmodel"])
