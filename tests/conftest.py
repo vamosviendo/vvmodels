@@ -45,6 +45,11 @@ def miotroobjetocomplejo(miotroobjeto: Model) -> ComplexModel:
 
 
 @pytest.fixture
+def mitercerobjetocomplejo(miotroobjeto: Model) -> ComplexModel:
+    return ComplexModel.crear(nombre='miotroobjetocompleto', numero=6.0, related=miotroobjeto)
+
+
+@pytest.fixture
 def mitercerobjetocomplejo(mitercerobjeto: Model) -> ComplexModel:
     return ComplexModel.crear(nombre='mitercerobjetocompleto', numero=6.0, related=mitercerobjeto)
 

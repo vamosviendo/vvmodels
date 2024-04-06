@@ -18,6 +18,7 @@ def elementos(
         miotroobjeto: MiTestRelatedModel,
         miobjetocomplejo: MiTestModel,
         miotroobjetocomplejo: MiTestModel,
+        mitercerobjetocomplejo: MiTestModel,
         miobjetopolimorfico: MiTestPolymorphModel
 ) -> list[TestModel]:
     return [miobjeto, miotroobjeto, miobjetocomplejo, miotroobjetocomplejo, miobjetopolimorfico]

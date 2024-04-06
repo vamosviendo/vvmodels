@@ -45,11 +45,6 @@ class SerializedObject(UserDict):
             if isinstance(dict, SerializedObject):
                 self.container = dict.container
 
-    @classmethod
-    def primere(cls, container: SerializedDb, **kwargs) -> Self | None:
-        result = container.primere(cls.model_string(), **kwargs)
-        return cls(result) or None
-
     def __setitem__(self, key: str, value: serializedobjectvalue):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
@@ -77,6 +72,24 @@ class SerializedObject(UserDict):
     @fields.setter
     def fields(self, value: dict[str, Any]):
         self['fields'] = value
+
+    @classmethod
+    def primere(cls, container: SerializedDb, **kwargs) -> Self | None:
+        result = container.primere(cls.model_string(), **kwargs)
+        return cls(result) or None
+
+    def all_kwargs_present(self, **kwargs) -> bool:
+        """ Devuelve True si todos los argumentos pasados con nombre corresponden
+            a pk, modelo o campos del objeto serializado.
+        """
+        result = True
+        for key, value in kwargs.items():
+            result = (self.pk == value) if key == "pk" \
+                else (self.model == value) if key == "model" \
+                else (key in self.fields.keys()) and (self.fields[key] == value)
+            if result is False:
+                break
+        return result
 
     def _validate(self, key: str, value: serializedobjectvalue) -> tuple[str, serializedobjectvalue]:
         if key == "model":
@@ -133,11 +146,11 @@ class SerializedDb(UserList):
         else:
             self.data.extend(self._validate(item) for item in other)
 
+    def filtrar(self, **kwargs) -> SerializedDb:
+        return SerializedDb([x for x in self if x.all_kwargs_present(**kwargs)])
+
     def filter_by_model(self, model: str) -> SerializedDb:
-        return SerializedDb([
-            x for x in self
-            if x["model"] == _validate_app_and_model(model)
-        ])
+        return self.filtrar(model=_validate_app_and_model(model))
 
     def primere(self, model: str, **kwargs) -> SerializedObject | None:
         try:
@@ -146,34 +159,28 @@ class SerializedDb(UserList):
             return None
 
     def tomar(self, **kwargs) -> SerializedObject:
-        # Validar argumentos: Si se pasa "pk", debe pasarse "model"
-        # a menos que todos los elementos de la serie compartan el mismo
-        # modelo.
-        if "pk" in kwargs.keys() and "model" not in kwargs.keys():
-            models = [x.model for x in self]
-            if not all(model == models[0] for model in models):
-                raise ValidationError(
-                    'Si se pasa argumento "pk", debe estar presente el argumento "model" '
-                    'o bien todos los valores de "model" en la serie deben ser iguales'
-                )
-
-        def all_kwargs_present(x: SerializedObject, **_kwargs) -> bool:
-            result = True
-            for key, value in _kwargs.items():
-                result = (x.pk == value) if key == "pk" \
-                    else (x.model == value) if key == "model" \
-                    else (x.fields[key] == value)
-                if result is False:
-                    break
-            return result
-
-        return next(x for x in self if all_kwargs_present(x, **kwargs))
+        return next(x for x in self if x.all_kwargs_present(**self._validate_kwargs(kwargs)))
 
     @staticmethod
     def _validate(item: SerializedObject) -> SerializedObject:
         if isinstance(item, SerializedObject):
             return item
         raise TypeError
+
+    def _validate_kwargs(self, kwargs):
+        """ Si se pasa "pk", debe pasarse "model" a menos que todos los
+            elementos de la serie compartan el mismo modelo.
+        """
+        if "pk" in kwargs.keys() and "model" not in kwargs.keys():
+            models = [x.model for x in self]
+            if not all(model == models[0] for model in models):
+                raise ValidationError(
+                    'Si se pasa argumento "pk", debe estar presente el '
+                    'argumento "model" o bien todos los valores de "model" '
+                    'en la serie deben ser iguales'
+                )
+        return kwargs
+
 
 
 def load_serialized_filename(archivo: str) -> SerializedDb:

@@ -1,6 +1,6 @@
 import pytest
 
-from vvmodel.serializers import SerializedObject
+from vvmodel.serializers import SerializedObject, SerializedDb
 from vvmodel.tests.serializers import SerializedMiTestModel
 
 
@@ -129,3 +129,42 @@ class TestPrimere:
     def test_devuelve_none_si_no_encuentra_argumento_con_clave(self, serialized_db):
         assert \
             SerializedMiTestModel.primere(serialized_db, nombre="nombreinexistente") is None
+
+
+class TestAllKwargsPresent:
+
+    @pytest.fixture
+    def serialized_object(self, serialized_db: SerializedDb) -> SerializedObject:
+        return serialized_db[3]
+
+    def test_devuelve_true_si_todos_los_campos_coinciden_con_los_argumentos_dados(self, serialized_object):
+        assert serialized_object.all_kwargs_present(
+            nombre="miobjetocompleto", numero=5.0
+        ) is True
+
+    def test_devuelve_false_si_el_valor_de_algun_campo_no_coincide_con_el_argumento_correspondiente(
+            self, serialized_object):
+        assert serialized_object.all_kwargs_present(
+            nombre="objeto inexistente", numero=5.0
+        ) is False
+
+    def test_devuelve_false_si_algun_argumento_no_corresponde_a_ningun_campo(self, serialized_object):
+        assert serialized_object.all_kwargs_present(
+            nombre="objeto inexistente", numero=5.0, clave="inexistente"
+        ) is False
+
+    def test_si_se_pasa_argumento_con_valor_none_devuelve_false_si_el_argumento_no_corresponde_a_ningun_campo(
+            self, serialized_object):
+        assert serialized_object.all_kwargs_present(otrocampo=None) is False
+
+    def test_si_el_argumento_es_model_devuelve_true_si_el_elemento_es_del_modelo_dado(self, serialized_object):
+        assert serialized_object.all_kwargs_present(model="tests.mitestmodel") is True
+
+    def test_si_el_argumento_es_model_devuelve_false_si_el_elemento_no_es_del_modelo_dado(self, serialized_object):
+        assert serialized_object.all_kwargs_present(model="tests.mitestrelatedmodel") is False
+
+    def test_si_el_argumento_es_pk_devuelve_true_si_coincide_con_la_clave_del_elemento(self, serialized_object):
+        assert serialized_object.all_kwargs_present(pk=serialized_object.pk) is True
+
+    def test_si_el_argumento_es_pk_devuelve_false_si_no_coincide_con_la_clave_del_elemento(self, serialized_object):
+        assert serialized_object.all_kwargs_present(pk=serialized_object.pk+1) is False

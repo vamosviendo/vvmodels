@@ -62,6 +62,41 @@ class TestFilterByModel:
             serialized_db.filter_by_model("tests.modeloinexistente")
 
 
+class TestFiltrar:
+    def test_devuelve_una_instancia_de_SerializedDb(self, serialized_db):
+        assert isinstance(serialized_db.filtrar(numero=5.0), SerializedDb)
+
+    def test_incluye_en_el_resultado_todos_los_elementos_en_los_que_all_kwargs_present_es_verdadero(
+            self, serialized_db, mocker):
+        mock_all_kwargs_present = mocker.patch(
+            "vvmodel.serializers.SerializedObject.all_kwargs_present",
+            autospec=True
+        )
+        mock_all_kwargs_present.side_effect = [True, True, False, True, False, False, True]
+        assert serialized_db.filtrar(cualquier="cosa") == [
+            serialized_db[0],
+            serialized_db[1],
+            serialized_db[3],
+            serialized_db[6],
+        ]
+
+    def test_incluye_en_la_SerializedDb_devuelta_todos_los_elementos_en_los_que_el_valor_del_campo_coincide_con_el_argumento(
+            self, serialized_db):
+        assert serialized_db.filtrar(numero=5.0) == [
+            x for x in serialized_db if x.fields.get("numero") == 5.0
+        ]
+
+    def test_si_se_buscan_campos_con_valor_none_no_incluye_elementos_que_no_tengan_ese_campo(self, serialized_db):
+        for dic in serialized_db[1:]:
+            dic.fields.update({"algo": None})
+        assert serialized_db[0] not in serialized_db.filtrar(algo=None)
+
+    def test_si_el_argumento_es_model_devuelve_todos_los_elementos_de_ese_modelo(self, serialized_db):
+        assert \
+            serialized_db.filtrar(model="tests.mitestmodel") == \
+            [x for x in serialized_db if x.model == "tests.mitestmodel"]
+
+
 class TestTomar:
     def test_devuelve_el_primer_elemento_en_el_que_el_valor_del_campo_coincide_con_el_argumento(
             self, serialized_db):
