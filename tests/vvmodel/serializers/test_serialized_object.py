@@ -105,6 +105,28 @@ class TestModelStr:
     def test_no_da_error_si_se_la_redefine_en_la_subclase(self):
         assert SerializedMiTestModel.model_string() == "tests.mitestmodel"
 
+
+class TestTodes:
+    def test_devuelve_todos_los_objetos_del_modelo_de_la_clase_presentes_en_una_SerializedDb_dada(self, serialized_db):
+        assert SerializedMiTestModel.todes(serialized_db) == serialized_db.filter_by_model("tests.mitestmodel")
+
+    def test_devuelve_una_SerializedDb(self, serialized_db):
+        assert isinstance(SerializedMiTestModel.todes(serialized_db), SerializedDb)
+
+    def test_elementos_de_la_SerializedDb_devuelta_corresponden_a_la_subclase_correcta_de_SerializedObject(
+            self, serialized_db):
+        for element in SerializedMiTestModel.todes(serialized_db):
+            assert isinstance(element, SerializedMiTestModel)
+
+    def test_elementos_de_la_SerializedDb_devuelta_reconocen_a_dicha_SerializedDb_como_su_container(self, serialized_db):
+        serie = SerializedMiTestModel.todes(serialized_db)
+        for element in serie:
+            assert element.container == serie
+
+    def test_da_error_de_no_implementacion_si_se_la_llama_en_SerializedObject(self, serialized_db):
+        with pytest.raises(NotImplementedError):
+            SerializedObject.todes(serialized_db)
+
 class TestPrimere:
     def test_devuelve_primer_objeto_del_modelo_de_la_clase_en_una_SerializedDb_dada(self, serialized_db):
         assert SerializedMiTestModel.primere(serialized_db) == serialized_db.primere("tests.mitestmodel")

@@ -78,6 +78,11 @@ class SerializedObject(UserDict):
         result = container.primere(cls.model_string(), **kwargs)
         return cls(result) or None
 
+    @classmethod
+    def todes(cls, container: SerializedDb) -> SerializedDb[Self]:
+        nuevo_container = container.filter_by_model(cls.model_string())
+        return SerializedDb([cls(x, nuevo_container) for x in nuevo_container])
+
     def all_kwargs_present(self, **kwargs) -> bool:
         """ Devuelve True si todos los argumentos pasados con nombre corresponden
             a pk, modelo o campos del objeto serializado.
