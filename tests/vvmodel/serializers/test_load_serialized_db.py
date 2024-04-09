@@ -9,9 +9,9 @@ def test_devuelve_una_instancia_de_SerializedDb(serialized_file):
 
 def test_instancia_devuelta_contiene_objetos_de_la_base_de_datos(elementos, serialized_file):
     serialized_db = load_serialized_file(serialized_file)
-    nombres = [x["fields"]["nombre"] for x in serialized_db]
+    identidades = [(x['model'], x['pk']) for x in serialized_db]
     for elemento in elementos:
-        assert elemento.nombre in nombres
+        assert (elemento._meta.label_lower, elemento.pk) in identidades
 
 
 def test_incluye_en_cada_objeto_una_referencia_a_la_SerializedDb_contenedora(elementos, serialized_file):

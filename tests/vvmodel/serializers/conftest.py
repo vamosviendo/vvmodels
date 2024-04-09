@@ -7,7 +7,8 @@ import pytest
 from django.core.management import call_command
 
 from vvmodel.serializers import SerializedDb, SerializedObject
-from vvmodel.tests.models import MiTestModel, MiTestRelatedModel, MiTestPolymorphModel
+from vvmodel.tests.models import MiTestModel, MiTestRelatedModel, \
+    MiTestPolymorphModel, MiTestPolymorphSubmodel, MiTestPolymorphOtherSubmodel
 
 TestModel = Union[MiTestModel, MiTestRelatedModel, MiTestPolymorphModel]
 
@@ -19,9 +20,13 @@ def elementos(
         miobjetocomplejo: MiTestModel,
         miotroobjetocomplejo: MiTestModel,
         mitercerobjetocomplejo: MiTestModel,
-        miobjetopolimorfico: MiTestPolymorphModel
+        miobjetopolimorfico: MiTestPolymorphModel,
+        misubobjetopolimorfico: MiTestPolymorphSubmodel,
+        miotrosubobjetopolimorfico: MiTestPolymorphOtherSubmodel,
 ) -> list[TestModel]:
-    return [miobjeto, miotroobjeto, miobjetocomplejo, miotroobjetocomplejo, miobjetopolimorfico]
+    return [miobjeto, miotroobjeto, miobjetocomplejo, miotroobjetocomplejo,
+            miobjetopolimorfico, misubobjetopolimorfico,
+            miotrosubobjetopolimorfico]
 
 
 @pytest.fixture
@@ -37,6 +42,16 @@ def serialized_file(elementos) -> Generator[TextIO, None, None]:
 
 @pytest.fixture
 def serialized_db(elementos: list[TestModel]) -> SerializedDb:
+    serialization = StringIO()
+    call_command('dumpdata', "tests", "--natural-foreign", indent=2, stdout=serialization)
+    serialized_db = SerializedDb()
+    for obj in json.loads(serialization.getvalue()):
+        serialized_db.append(SerializedObject(obj, container=serialized_db))
+    return serialized_db
+
+
+@pytest.fixture
+def serialized_db_no_natural(elementos: list[TestModel]) -> SerializedDb:
     serialization = StringIO()
     call_command('dumpdata', "tests", indent=2, stdout=serialization)
     serialized_db = SerializedDb()

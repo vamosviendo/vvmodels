@@ -72,12 +72,14 @@ class TestFiltrar:
             "vvmodel.serializers.SerializedObject.all_kwargs_present",
             autospec=True
         )
-        mock_all_kwargs_present.side_effect = [True, True, False, True, False, False, True]
+        mock_all_kwargs_present.side_effect = [True, True, False, True, False, False, True, False, False, True, False]
+        print(len(serialized_db))
         assert serialized_db.filtrar(cualquier="cosa") == [
             serialized_db[0],
             serialized_db[1],
             serialized_db[3],
             serialized_db[6],
+            serialized_db[9],
         ]
 
     def test_incluye_en_la_SerializedDb_devuelta_todos_los_elementos_en_los_que_el_valor_del_campo_coincide_con_el_argumento(

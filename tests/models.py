@@ -25,5 +25,9 @@ class MiTestPolymorphSubmodel(MiTestPolymorphModel):
     detalle = models.TextField()
 
 
+class MiTestPolymorphOtherSubmodel(MiTestPolymorphModel):
+    caracteristicas = models.TextField()
+
+
 class MiTestPolymorphSubSubModel(MiTestPolymorphSubmodel):
     pass

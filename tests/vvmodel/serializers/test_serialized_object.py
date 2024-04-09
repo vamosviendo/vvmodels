@@ -1,7 +1,8 @@
 import pytest
 
 from vvmodel.serializers import SerializedObject, SerializedDb
-from vvmodel.tests.serializers import SerializedMiTestModel
+from vvmodel.tests.serializers import SerializedMiTestModel, SerializedMiTestPolymorphModel, \
+    SerializedMiTestPolymorphSubSubModel
 
 
 @pytest.fixture
@@ -9,7 +10,25 @@ def serialized_object():
     return SerializedObject(
         model="tests.mitestpolymorphmodel",
         pk=1,
-        fields={"nombre": "nombre", "número": 15}
+        fields={"nombre": "nombre", "numero": 15}
+    )
+
+
+@pytest.fixture
+def serialized_other_model():
+    return SerializedObject(
+        model="tests.mitestmodel",
+        pk=1,
+        fields={"nombre": "otronombre", "numero": 18}
+    )
+
+
+@pytest.fixture
+def serialized_other_pk():
+    return SerializedObject(
+        model="tests.mitestpolymorphmodel",
+        pk=2,
+        fields={"nombre": "otropk", "numero": 19}
     )
 
 
@@ -56,6 +75,24 @@ class TestValidation:
             serialized_object["model"] = "clavecualquiera"
 
         serialized_object["model"] = "tests.mitestrelatedmodel"   # No debe dar error
+
+
+class TestLt:
+    def test_devuelve_true_si_modelo_es_anterior_alfabeticamente_al_de_otro_elemento(
+            self, serialized_object, serialized_other_model):
+        assert serialized_other_model.__lt__(serialized_object) is True
+
+    def test_devuelve_true_si_modelo_es_igual_y_pk_es_menor_a_los_de_otro_elemento(
+            self, serialized_object, serialized_other_pk):
+        assert serialized_object.__lt__(serialized_other_pk) is True
+
+    def test_devuelve_false_si_modelo_es_posterior_alfabeticamente_al_de_otro_elemento(
+            self, serialized_object, serialized_other_model):
+        assert serialized_object.__lt__(serialized_other_model) is False
+
+    def test_devuelve_false_si_modelo_es_igual_y_pk_es_mayor_a_los_de_otro_elemento(
+            self, serialized_object, serialized_other_pk):
+        assert serialized_other_pk.__lt__(serialized_object) is False
 
 
 class TestProperties:
@@ -126,6 +163,19 @@ class TestTodes:
     def test_da_error_de_no_implementacion_si_se_la_llama_en_SerializedObject(self, serialized_db):
         with pytest.raises(NotImplementedError):
             SerializedObject.todes(serialized_db)
+
+    @pytest.mark.parametrize("fixt", ["serialized_db", "serialized_db_no_natural"])
+    def test_en_modelos_polimorficos_incluye_las_subclases_del_modelo_en_la_SerializedDb_devuelta(self, fixt, request):
+        serialized_db = request.getfixturevalue(fixt)
+        assert sorted(SerializedMiTestPolymorphModel.todes(serialized_db)) == sorted(
+            serialized_db.filter_by_model("tests.mitestpolymorphmodel") + \
+            serialized_db.filter_by_model("tests.mitestpolymorphsubmodel") + \
+            serialized_db.filter_by_model("tests.mitestpolymorphothersubmodel")
+        )
+
+    def test_si_no_encuentra_en_el_container_elementos_de_la_clase_devuelve_un_SerializedDb_vacio(self, serialized_db):
+        assert SerializedMiTestPolymorphSubSubModel.todes(serialized_db) == SerializedDb()
+
 
 class TestPrimere:
     def test_devuelve_primer_objeto_del_modelo_de_la_clase_en_una_SerializedDb_dada(self, serialized_db):

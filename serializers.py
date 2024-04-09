@@ -5,6 +5,7 @@ from collections import UserDict, UserList
 from typing import Any, TextIO, Self
 
 from django.apps import apps
+from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
 
 serializedobjectvalue: type = str | int | dict[str: Any]
@@ -49,6 +50,9 @@ class SerializedObject(UserDict):
         key, value = self._validate(key, value)
         super().__setitem__(key, value)
 
+    def __lt__(self, other):
+        return (self.model, self.pk) < (other.model, other.pk)
+
     @property
     def model(self) -> str:
         return self['model']
@@ -81,6 +85,24 @@ class SerializedObject(UserDict):
     @classmethod
     def todes(cls, container: SerializedDb) -> SerializedDb[Self]:
         nuevo_container = container.filter_by_model(cls.model_string())
+
+        try:
+            keys = nuevo_container[0].fields.keys()
+        except IndexError:
+            keys = []
+
+        if "content_type" in keys:
+            try:
+                content_types = set(".".join(x.fields["content_type"]) for x in nuevo_container)
+            except TypeError:
+                content_types = set()
+                for x in nuevo_container:
+                    content_type = ContentType.objects.get(pk=x.fields["content_type"])
+                    content_types.add(f"{content_type.app_label}.{content_type.model}")
+
+            for ct in content_types - {cls.model_string()}:
+                nuevo_container += container.filter_by_model(ct)
+
         return SerializedDb([cls(x, nuevo_container) for x in nuevo_container])
 
     def all_kwargs_present(self, **kwargs) -> bool:

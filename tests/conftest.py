@@ -5,7 +5,7 @@ import pytest
 from vvmodel.tests.models import (
     MiTestRelatedModel as Model,
     MiTestModel as ComplexModel,
-    MiTestPolymorphModel, MiTestPolymorphSubmodel, MiTestPolymorphSubSubModel
+    MiTestPolymorphModel, MiTestPolymorphSubmodel, MiTestPolymorphSubSubModel, MiTestPolymorphOtherSubmodel
 )
 
 
@@ -71,6 +71,12 @@ def miobjetopolimorfico() -> MiTestPolymorphModel:
 @pytest.fixture
 def misubobjetopolimorfico() -> MiTestPolymorphSubmodel:
     return MiTestPolymorphSubmodel.crear(nombre='subobjeto', numero=2, detalle='cosas')
+
+
+@pytest.fixture
+def miotrosubobjetopolimorfico() -> MiTestPolymorphOtherSubmodel:
+    return MiTestPolymorphOtherSubmodel.crear(
+        nombre='subotroobjeto', numero=3, caracteristicas='lista de características')
 
 
 @pytest.fixture
