@@ -84,6 +84,13 @@ class MiModel(models.Model):
     def tomar_de_bd(self) -> Optional[Self]:
         return self.get_class().tomar_o_nada(pk=self.pk)
 
+    def clean_save(
+            self, exclude=None, validate_unique=True, validate_constraints=True,
+            force_insert=False, force_update=False, using=None, update_fields=None
+    ):
+        self.full_clean(exclude, validate_unique, validate_constraints)
+        self.save(force_insert, force_update, using, update_fields)
+
     def update_from(self, objeto: Self, commit: bool = True) -> Self:
         for campo in objeto.get_class()._meta.fields:
             valor = campo.value_from_object(objeto)
