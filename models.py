@@ -11,6 +11,10 @@ from vvutils.objetos import has_not_none_attr
 
 class MiModel(models.Model):
 
+    # Lista de nombres de campos destinados a aparecer en un ModelForm del modelo.
+    # Se deja vacío para que de error si se lo usa sin definirlo en el modelo.
+    form_fields: tuple[str]
+
     class Meta:
         abstract = True
 
